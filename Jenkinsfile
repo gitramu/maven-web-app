@@ -1,9 +1,9 @@
 node {
     stage('Clone repo') {
-         git credentialsId: 'GIT-Credentials', url: 'https://github.com/ashokitschool/maven-web-app.git'
+         git credentialsId: 'GIT-Credentials', url: 'https://github.com/gitramu/maven-web-app.git'
     }
     stage('Maven Build') {
-        def mavenHome = tool name: "Maven-3.8.6", type: "maven"
+        def mavenHome = tool name: "Maven-3.8.7", type: "maven"
         def mavenCMD = "${mavenHome}/bin/mvn"
         sh "${mavenCMD} clean package"
     }
