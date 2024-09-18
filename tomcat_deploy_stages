@@ -1,0 +1,48 @@
+pipeline {
+    agent any
+    environment {
+        TOMCAT_HOST = '3.107.25.245'
+        TOMCAT_USER = 'ec2-user' // or any user with SSH access to the Tomcat server
+        SSH_CREDENTIALS_ID = 'tomcat-ssh-credentials' // Jenkins credentials ID for SSH key
+        WAR_FILE = 'target/your-app.war' // Path to the built WAR file
+    }
+    stages {
+        stage('Checkout Code') {
+            steps {
+                git 'https://github.com/gitramu/maven-web-app.git'
+            }
+        }
+        stage('Build with Maven') {
+            steps {
+                sh 'mvn clean package'
+            }
+        }
+        stage('Deploy to Tomcat') {
+            steps {
+                script {
+                    // Copy WAR file to Tomcat server
+                    sshagent(credentials: [SSH_CREDENTIALS_ID]) {
+                        sh """
+                        scp -o StrictHostKeyChecking=no ${WAR_FILE} ${TOMCAT_USER}@${TOMCAT_HOST}:/path/to/tomcat/webapps/
+                        """
+                    }
+                    // Restart Tomcat server
+                    sshagent(credentials: [SSH_CREDENTIALS_ID]) {
+                        sh """
+                        ssh ${TOMCAT_USER}@${TOMCAT_HOST} 'cd /path/to/tomcat/bin && ./shutdown.sh && ./startup.sh'
+                        """
+                    }
+                }
+            }
+        }
+    }
+    post {
+        success {
+            echo 'Deployment completed successfully!'
+        }
+        failure {
+            echo 'Deployment failed.'
+        }
+    }
+}
+
